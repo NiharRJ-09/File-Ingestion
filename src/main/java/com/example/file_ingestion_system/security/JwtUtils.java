@@ -1,7 +1,9 @@
 package com.example.file_ingestion_system.security;
 
 
+import com.example.file_ingestion_system.model.entity.User;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -68,8 +70,23 @@ public class JwtUtils {
                 .compact();
     }
 
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    public Boolean validateToken(String token) {
+        try{
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token);
+            return true;
+        }catch (JwtException | IllegalArgumentException e){
+            return false;
+        }
+    }
+
+    public String getUsernameFromToken(String refreshToken) {
+        return extractUsername(refreshToken);
+    }
+
+    public String generateRefreshToken(User user) {
+        return generateToken(user.getUsername(), user.getRole().name());
     }
 }

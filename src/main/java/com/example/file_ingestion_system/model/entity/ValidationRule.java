@@ -44,4 +44,8 @@ public class ValidationRule {
     public boolean validate(Map<String, Object> row, Map<String, Object> ruleConfig) {
         return false;
     }
+
+    public Long getJobId() {
+        return fileJob.getId();
+    }
 }

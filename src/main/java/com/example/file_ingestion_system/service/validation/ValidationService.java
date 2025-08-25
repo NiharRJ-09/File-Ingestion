@@ -1,14 +1,18 @@
 package com.example.file_ingestion_system.service.validation;
+import com.example.file_ingestion_system.exception.ResourceNotFoundException;
+import com.example.file_ingestion_system.model.dto.ValidationRuleDto;
 import com.example.file_ingestion_system.model.entity.FileJob;
 import com.example.file_ingestion_system.model.entity.ProcessingStep;
 import com.example.file_ingestion_system.model.entity.ValidationRule;
 import com.example.file_ingestion_system.repository.ValidationRuleRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ValidationService {
@@ -93,5 +97,57 @@ public class ValidationService {
         }
 
         return validationStep;
+    }
+
+    public ValidationRuleDto createRule(@Valid ValidationRuleDto ruleDto) {
+        ValidationRule rule = new ValidationRule();
+        rule.setRuleName(ruleDto.getRulename());
+        rule.setRuleType(ruleDto.getRuleType());
+        rule.setRuleConfig(ruleDto.getRuleConfig());
+        rule.setSeverity(ruleDto.getSeverity());
+        rule.setJobId(ruleDto.getJobId());
+        rule.setCreatedAt(LocalDateTime.now());
+
+        ValidationRule savedRule = validationRuleRepository.save(rule);
+        return mapToDto(savedRule);
+    }
+
+    private ValidationRuleDto mapToDto(ValidationRule rule) {
+        ValidationRuleDto dto = new ValidationRuleDto();
+        dto.setId(rule.getId());
+        dto.setJobId(rule.getJobId());
+        dto.setRulename(rule.getRuleName());
+        dto.setRuleType(rule.getRuleType());
+        dto.setRuleConfig(rule.getRuleConfig());
+        dto.setSeverity(rule.getSeverity());
+        dto.setCreatedAt(rule.getCreatedAt());
+        return dto;
+    }
+
+    public List<ValidationRuleDto> getRulesForJob(Long jobId) {
+        List<ValidationRule> rules = validationRuleRepository.findByJobId(jobId);
+        return rules.stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    public ValidationRuleDto updateRule(Long ruleId, @Valid ValidationRuleDto ruleDto) {
+        ValidationRule rule = validationRuleRepository.findById(ruleId)
+                .orElseThrow(() -> new ResourceNotFoundException("ValidationRule", "id", ruleId));
+
+        rule.setRuleName(ruleDto.getRulename());
+        rule.setRuleType(ruleDto.getRuleType());
+        rule.setRuleConfig(ruleDto.getRuleConfig());
+        rule.setSeverity(ruleDto.getSeverity());
+
+        ValidationRule updatedRule = validationRuleRepository.save(rule);
+        return mapToDto(updatedRule);
+    }
+
+    public void deleteRule(Long ruleId) {
+        if (!validationRuleRepository.existsById(ruleId)) {
+            throw new ResourceNotFoundException("ValidationRule", "id", ruleId);
+        }
+        validationRuleRepository.deleteById(ruleId);
     }
 }

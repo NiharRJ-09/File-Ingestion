@@ -9,4 +9,10 @@ import java.util.List;
 @Repository
 public interface TransformationRepository extends JpaRepository<Transformation, Long> {
     List<Transformation> findByStepIdOrderByTransformOrder(Long stepId);
+
+    List<Transformation> findByProcessingStepIdOrderByTransformOrder(Long stepId);
+    List<Transformation> findByProcessingStepId(Long stepId);
+
+    void deleteByProcessingStepId(Long stepId);
+
 }
